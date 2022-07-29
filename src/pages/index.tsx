@@ -7,9 +7,10 @@ const createSeats = (rows, startIndex, endIndex) => {
   let i = 0;
   let j = startIndex;
   let k = "A";
+  let eI = endIndex + 1;
   const section = [];
   while (i < 6 && j <= rows) {
-    if (k > endIndex) {
+    if (k > eI) {
       k = "A";
       j++;
     }
@@ -24,7 +25,7 @@ const createSeats = (rows, startIndex, endIndex) => {
 const movies = [
   {
     name: "Avenger",
-    price: 10,
+
     occupied: ["4F", "4E", "4D", "4C", "2C", "2B"],
     cinema: {
       premiumRows: 2,
@@ -46,7 +47,7 @@ export default function index() {
   ]);
   const updateseats = trpc.useMutation("movie.update-movie");
 
-  console.log(MovieSeance);
+  //console.log(MovieSeance);
 
   function intToChar(int) {
     const code = "A".charCodeAt(0);
@@ -65,15 +66,17 @@ export default function index() {
 
   const [availableSeats, setAvailableSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
+  const time = movie?.MovieSeance[0]?.date.toLocaleTimeString();
+  const [selectedTime, setSelectedTime] = useState();
 
-  console.log(availableSeats);
   useEffect(() => {
     if (movie) {
       setAvailableSeats(movie.MovieSeance[0]?.takenSeats);
+      setSelectedTime(movie.MovieSeance[0]);
     }
   }, [movie]);
-  console.log(movie?.MovieSeance[0]?.takenSeats);
-  console.log(availableSeats);
+  //console.log(movie?.MovieSeance[0]?.takenSeats);
+  //console.log(availableSeats);
 
   const addSeat = (ev) => {
     if (numberOfSeats && !ev.target.className.includes("disabled")) {
@@ -105,34 +108,70 @@ export default function index() {
   };
   const [numberOfSeats, setNumberOfSeats] = useState(2);
 
+  function Movies({ seanseTime, onChange }) {
+    //console.log("SeanseTime", seanseTime);
+    return (
+      <div className="Movies">
+        <select
+          id="movie"
+          value={seanseTime?.id}
+          onChange={(e) => {
+            onChange(
+              movie?.MovieSeance.find((movie) => movie.id === e.target.value)
+            );
+          }}
+        >
+          {movie?.MovieSeance.map((time) => (
+            <option key={time.id} value={time.id}>
+              {movie.title} at {time.date.toLocaleTimeString()}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
   if (!movie && isLoading) return null;
   if (movie && !isLoading)
     return (
       <div className="flex flex-col items-center w-full space-y-2">
         {!isLoading && (
           <>
-            <h2>Booking ticket for {movie.title}</h2>
-            <input
-              className="bg-zinc-50 border-2 p-2"
-              type="number"
-              value={numberOfSeats}
-              onChange={(ev) => setNumberOfSeats(ev.target.value)}
+            <Movies
+              seanseTime={selectedTime}
+              onChange={(selectedTime) => {
+                setBookedSeats([]);
+                setSelectedTime(selectedTime);
+              }}
             />
-            <Seats
-              values={premiumSeats}
-              seatsRow={premiumseatsInRow}
-              availableSeats={availableSeats}
-              bookedSeats={bookedSeats}
-              addSeat={addSeat}
-            />
-            <Seats
-              values={normalSeats}
-              seatsRow={normalseatsInRow}
-              availableSeats={availableSeats}
-              bookedSeats={bookedSeats}
-              addSeat={addSeat}
-            />
-            <button onClick={confirmBooking}>Book seats</button>
+
+            <div>
+              <h2>Booking ticket for at:</h2>
+              <div className="bg-zinc-600 p-2 text-white"></div>
+              <input
+                className="bg-zinc-50 border-2 p-2"
+                type="number"
+                value={numberOfSeats}
+                onChange={(ev) => setNumberOfSeats(ev.target.value)}
+              />
+              <Seats
+                values={premiumSeats}
+                seanseTime={selectedTime}
+                seatsRow={premiumseatsInRow}
+                availableSeats={availableSeats}
+                bookedSeats={bookedSeats}
+                addSeat={addSeat}
+              />
+              <Seats
+                values={normalSeats}
+                seanseTime={selectedTime}
+                seatsRow={normalseatsInRow}
+                availableSeats={availableSeats}
+                bookedSeats={bookedSeats}
+                addSeat={addSeat}
+              />
+              <button onClick={confirmBooking}>Book seats</button>
+            </div>
           </>
         )}
       </div>

@@ -3,10 +3,11 @@ import React from "react";
 const Seats = (props) => {
   console.log(props);
   const row = props.seatsRow;
+
   return (
-    <div className={`grid grid-cols-${row} gap-2`}>
+    <div className={`grid grid-cols-7 gap-2`}>
       {props.values.map((seat) => {
-        const isAvailable = props.availableSeats.includes(seat);
+        const isAvailable = props?.seanseTime?.takenSeats.includes(seat);
         const isBooked = props.bookedSeats.includes(seat);
         return (
           <div
