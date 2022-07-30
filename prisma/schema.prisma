@@ -63,30 +63,41 @@ model Movie {
     id          String        @id @unique @default(cuid())
     title       String
     price       Int
-    MovieSeance MovieSeance[]
-}
-
-model MovieSeance {
-    id         String   @id @unique @default(cuid())
-    date       DateTime
-    takenSeats String[]
-    movie      Movie    @relation(fields: [movieId], references: [id])
-    movieId    String
+    movieSeance MovieSeance[]
 }
 
 model Cinema {
     id         String       @id @unique @default(cuid())
     name       String
-    CinemaHall CinemaHall[]
+    cinemaHall CinemaHall[]
 }
 
 model CinemaHall {
-    id                String @id @unique @default(cuid())
-    name              String
-    premiumRows       Int
-    premiumSeatsInRow Int
-    normalRows        Int
-    normalSeatsInRow  Int
-    cinema            Cinema @relation(fields: [cinemaId], references: [id])
-    cinemaId          String
+    id          String        @id @unique @default(cuid())
+    name        String
+    cinema      Cinema        @relation(fields: [cinemaId], references: [id])
+    cinemaId    String
+    movieSeance MovieSeance[]
+    seats       Seats[]
+}
+
+model Seats {
+    id              String     @id @unique @default(cuid())
+    name            String?
+    numberOfRows    Int
+    rowsIndex       Int
+    horizontalSpace Int[]
+    numberOfSeats   Int
+    CinemaHall      CinemaHall @relation(fields: [cinemaHallId], references: [id])
+    cinemaHallId    String
+}
+
+model MovieSeance {
+    id           String     @id @unique @default(cuid())
+    date         DateTime
+    takenSeats   String[]
+    cinemaHall   CinemaHall @relation(fields: [cinemaHallId], references: [id])
+    cinemaHallId String
+    Movie        Movie      @relation(fields: [movieId], references: [id])
+    movieId      String
 }
