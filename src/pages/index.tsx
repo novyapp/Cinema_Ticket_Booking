@@ -1,4 +1,5 @@
 import { MovieSeance } from "@prisma/client";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import Seat from "../components/Seat";
 import Seats from "../components/Seats";
@@ -28,8 +29,19 @@ interface MoviesType {
     movieId: string;
   }) => void;
 }
+export async function getServerSideProps() {
+  // Fetch data from external API
+  const res = await fetch(
+    "https://api.themoviedb.org/3/movie/361743?api_key=6c1990d663f2b81dc2690366937da078&language=en-US"
+  );
+  const data = await res.json();
 
-export default function App() {
+  // Pass data to the page via props
+  return { props: { data } };
+}
+
+export default function App({ data }) {
+  console.log(data);
   const { data: cinema, isLoading } = trpc.useQuery([
     "cinema.get-halls",
     { id: "cl66dr7gt0031sovnv5ib7wsu" },
@@ -44,8 +56,6 @@ export default function App() {
   });
   const deftime = cinema?.cinemaHall[0]?.movieSeance[0];
   const seats = cinema?.cinemaHall[0]?.seats;
-
-  console.log(seats);
 
   const [selectedMovie, setSelectedMovie] = useState<MovieSeance | undefined>(
     deftime
@@ -113,31 +123,45 @@ export default function App() {
   if (!cinema && isLoading) return null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-t from-slate-800 via-slate-900 to-black/90 items-center space-y-6 ">
-      <Movies
-        movie={selectedMovie}
-        onChange={(movie) => {
-          setSelectedSeats([]);
-          setSelectedMovie(movie);
-        }}
-      />
+    <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[100vh] bg-zinc-900/90">
+      <main className="relative px-4 pb-24 lg:space-y-24 lg:px-36 ">
+        <div className="flex flex-col space-y-2 py-24 md:space-y-4 lg:h-[90vh] lg:justify-end lg:pb-24 ">
+          <div className="absolute top-0 left-0 -z-10 h-[55vh]  md:h-[85vh] w-screen ">
+            <Image
+              src={`https://image.tmdb.org/t/p/original/${
+                data?.backdrop_path || data?.poster_path
+              }`}
+              layout="fill"
+              objectFit="cover"
+            />
+          </div>
+          <h1>{data.original_title}</h1>
+          <Movies
+            movie={selectedMovie}
+            onChange={(movie) => {
+              setSelectedSeats([]);
+              setSelectedMovie(movie);
+            }}
+          />
 
-      <ShowCase />
-      <Cinema
-        seatsIn={seats}
-        movie={selectedMovie}
-        numberOfSeats={numberOfSeats}
-        selectedSeats={selectedSeats}
-        onSelectedSeatsChange={(selectedSeats: React.SetStateAction<never[]>) =>
-          setSelectedSeats(selectedSeats)
-        }
-      />
-      <button
-        onClick={confirmBooking}
-        className="rounded-md p-2 bg-gradient-to-b from-pink-500 to bg-pink-600 font-semibold text-white w-32"
-      >
-        Book seats
-      </button>
+          <ShowCase />
+          <Cinema
+            seatsIn={seats}
+            movie={selectedMovie}
+            numberOfSeats={numberOfSeats}
+            selectedSeats={selectedSeats}
+            onSelectedSeatsChange={(
+              selectedSeats: React.SetStateAction<never[]>
+            ) => setSelectedSeats(selectedSeats)}
+          />
+          <button
+            onClick={confirmBooking}
+            className="rounded-md p-2 !bg-gradient-to-b !from-pink-500 to !bg-pink-600 font-semibold text-white w-32"
+          >
+            Book seats
+          </button>
+        </div>
+      </main>
     </div>
   );
 }
@@ -192,7 +216,7 @@ function Cinema({
       onSelectedSeatsChange([...slice, seat]);
     }
   }
-  if (!movie) return null;
+  if (!seatsIn && !movie) return null;
   return (
     <>
       <div className="flex flex-col items-center space-y-2">
