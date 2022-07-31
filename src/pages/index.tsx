@@ -60,7 +60,7 @@ export default function App() {
   const Movies = ({ movie, onChange }: MoviesType) => {
     return (
       <div className="flex justify-center items-center space-x-4">
-        <label htmlFor="movie">Pick a time:</label>
+        <label htmlFor="movie">Start time:</label>
         <select
           className="text-zinc-200 bg-zinc-700 p-2 rounded-md"
           id="movie"
