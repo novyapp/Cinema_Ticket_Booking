@@ -28,22 +28,25 @@ export default function Seat({
     const code = "A".charCodeAt(0);
     return String.fromCharCode(code + int);
   }
+  let initRow = 0;
+  let initInd = 1;
 
   return (
     <div className="flex flex-col items-center space-y-8">
-      {seatsIn.map((seatsTypes) => {
+      {seatsIn.map((seatsTypes, i, array) => {
         const nti = intToChar(seatsTypes.numberOfSeats - 1);
+        const prev = array[i - 1];
+
+        const numOfRows = (initRow += seatsTypes.numberOfRows);
+        const indexRows = i === 0 ? initInd : (initInd += prev.numberOfRows);
+
         function getNumofCols() {
           const num = seatsTypes.numberOfSeats;
           return "grid-cols-" + num;
         }
 
         const fd = `grid gap-2 ${getNumofCols()}`;
-        const hallSeaction = createSeats(
-          seatsTypes.numberOfRows,
-          seatsTypes.rowsIndex,
-          nti
-        );
+        const hallSeaction = createSeats(numOfRows, indexRows, nti);
 
         return (
           <div key={seatsTypes.id} className={fd}>

@@ -41,7 +41,6 @@ export async function getServerSideProps() {
 }
 
 export default function App({ data }) {
-  console.log(data);
   const { data: cinema, isLoading } = trpc.useQuery([
     "cinema.get-halls",
     { id: "cl66dr7gt0031sovnv5ib7wsu" },
@@ -68,42 +67,67 @@ export default function App({ data }) {
   }, [isLoading]);
 
   const Movies = ({ movie, onChange }: MoviesType) => {
+    const [activeId, setActiveId] = useState(movie.id);
+    console.log(movie);
     return (
-      <div className="flex justify-center items-center space-x-4">
-        <label htmlFor="movie">Start time:</label>
-        <select
-          className="text-zinc-200 bg-zinc-700 p-2 rounded-md"
-          id="movie"
-          value={movie?.id}
-          onChange={(e) => {
-            onChange(
-              cinema?.cinemaHall[0]?.movieSeance.find(
-                (mov) => mov.id === e.target.value
-              )
-            );
-          }}
-        >
-          {cinema?.cinemaHall[0]?.movieSeance.map((mov) => (
-            <option
-              key={mov.id}
-              value={mov.id}
-              className="text-zinc-200 bg-zinc-700"
-            >
-              {mov.date.toLocaleTimeString()}
-            </option>
-          ))}
-        </select>
-        <label>Number of tickets: </label>
+      <>
+        <div>
+          <div className="flex">
+            {cinema?.cinemaHall[0].movieSeance.map((seans) => (
+              <div
+                key={seans.id}
+                onClick={() => {
+                  setSelectedMovie(seans);
+                  setActiveId(seans.id);
+                }}
+                className={`bg-zinc-800 p-6 m-2 h-20 flex flex-col rounded-md p-2${
+                  activeId === seans.id
+                    ? "flex bg-gradient-to-t from-pink-700 to-pink-500"
+                    : null
+                }`}
+              >
+                <span>{seans.date.getMinutes()}</span>
+                <span> {seans.date.toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex  justify-center items-center space-x-4">
+          <label htmlFor="movie">Start time:</label>
+          <select
+            className="text-zinc-200 bg-zinc-700 p-2 rounded-md"
+            id="movie"
+            value={movie?.id}
+            onChange={(e) => {
+              onChange(
+                cinema?.cinemaHall[0]?.movieSeance.find(
+                  (mov) => mov.id === e.target.value
+                )
+              );
+            }}
+          >
+            {cinema?.cinemaHall[0]?.movieSeance.map((mov) => (
+              <option
+                key={mov.id}
+                value={mov.id}
+                className="text-zinc-200 bg-zinc-700"
+              >
+                {mov.date.toLocaleTimeString()}
+              </option>
+            ))}
+          </select>
+          <label>Number of tickets: </label>
 
-        <input
-          className="text-zinc-200 bg-zinc-700 p-2 rounded-md w-20"
-          type="number"
-          value={numberOfSeats}
-          onChange={(ev) =>
-            setNumberOfSeats(ev.target.value as unknown as number)
-          }
-        />
-      </div>
+          <input
+            className="text-zinc-200 bg-zinc-700 p-2 rounded-md w-20"
+            type="number"
+            value={numberOfSeats}
+            onChange={(ev) =>
+              setNumberOfSeats(ev.target.value as unknown as number)
+            }
+          />
+        </div>
+      </>
     );
   };
 
@@ -125,7 +149,7 @@ export default function App({ data }) {
   return (
     <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[100vh] bg-zinc-900/90">
       <main className="relative px-4 pb-24 lg:space-y-24 lg:px-36 ">
-        <div className="flex flex-col space-y-2 py-24 md:space-y-4 lg:h-[90vh] lg:justify-end lg:pb-24 ">
+        <div className="flex flex-col space-y-4 py-24 md:space-y-4 lg:h-[90vh] lg:pb-24 ">
           <div className="absolute top-0 left-0 -z-10 h-[55vh]  md:h-[85vh] w-screen ">
             <Image
               src={`https://image.tmdb.org/t/p/original/${
@@ -135,31 +159,40 @@ export default function App({ data }) {
               objectFit="cover"
             />
           </div>
-          <h1>{data.original_title}</h1>
-          <Movies
-            movie={selectedMovie}
-            onChange={(movie) => {
-              setSelectedSeats([]);
-              setSelectedMovie(movie);
-            }}
-          />
+          <div className="grid grid-cols-2">
+            <div className="flex flex-col space-y-6">
+              <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-blue-400">
+                {data.original_title}
+              </h1>
+              <p>{data.overview}</p>
+            </div>
+            <div className="flex flex-col space-y-6 items-center">
+              <Movies
+                movie={selectedMovie}
+                onChange={(movie) => {
+                  setSelectedSeats([]);
+                  setSelectedMovie(movie);
+                }}
+              />
 
-          <ShowCase />
-          <Cinema
-            seatsIn={seats}
-            movie={selectedMovie}
-            numberOfSeats={numberOfSeats}
-            selectedSeats={selectedSeats}
-            onSelectedSeatsChange={(
-              selectedSeats: React.SetStateAction<never[]>
-            ) => setSelectedSeats(selectedSeats)}
-          />
-          <button
-            onClick={confirmBooking}
-            className="rounded-md p-2 !bg-gradient-to-b !from-pink-500 to !bg-pink-600 font-semibold text-white w-32"
-          >
-            Book seats
-          </button>
+              <ShowCase />
+              <Cinema
+                seatsIn={seats}
+                movie={selectedMovie}
+                numberOfSeats={numberOfSeats}
+                selectedSeats={selectedSeats}
+                onSelectedSeatsChange={(
+                  selectedSeats: React.SetStateAction<never[]>
+                ) => setSelectedSeats(selectedSeats)}
+              />
+              <button
+                onClick={confirmBooking}
+                className="rounded-md p-2 !bg-gradient-to-b !from-pink-500 to !bg-pink-600 font-semibold text-white w-32"
+              >
+                Book seats
+              </button>
+            </div>
+          </div>
         </div>
       </main>
     </div>
