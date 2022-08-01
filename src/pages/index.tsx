@@ -67,7 +67,7 @@ export default function App({ data }) {
   }, [isLoading]);
 
   const Movies = ({ movie, onChange }: MoviesType) => {
-    const [activeId, setActiveId] = useState(movie.id);
+    const [activeId, setActiveId] = useState(movie?.id);
     console.log(movie);
     return (
       <>

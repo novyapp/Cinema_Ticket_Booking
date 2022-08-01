@@ -82,14 +82,12 @@ model CinemaHall {
 }
 
 model Seats {
-    id              String     @id @unique @default(cuid())
-    name            String?
-    numberOfRows    Int
-    rowsIndex       Int
-    horizontalSpace Int[]      @default([])
-    numberOfSeats   Int
-    CinemaHall      CinemaHall @relation(fields: [cinemaHallId], references: [id])
-    cinemaHallId    String
+    id            String     @id @unique @default(cuid())
+    name          String?
+    numberOfRows  Int
+    numberOfSeats Int
+    CinemaHall    CinemaHall @relation(fields: [cinemaHallId], references: [id])
+    cinemaHallId  String
 }
 
 model MovieSeance {
