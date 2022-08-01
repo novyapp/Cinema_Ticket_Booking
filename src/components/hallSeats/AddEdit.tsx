@@ -23,6 +23,7 @@ export default function AddEditHallSeats() {
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<Inputs>();
 
@@ -50,9 +51,21 @@ export default function AddEditHallSeats() {
     },
   });
 
-  const deleteSeats = async (id) => {
-    console.log(id);
+  const deleteSeats = async (id: string) => {
+    console.log("id", id);
     deleteSeatsInHall.mutate({ id });
+  };
+  const updateSeatRow = async (seat: {
+    id: string;
+    name: string;
+    numberOfRows: string;
+    numberOfSeats: string;
+  }) => {
+    setIsAddMode(false);
+    setValue("id", seat.id);
+    setValue("name", seat.name);
+    setValue("rows", seat.numberOfRows);
+    setValue("seats", seat.numberOfSeats);
   };
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
@@ -63,15 +76,13 @@ export default function AddEditHallSeats() {
     console.log(data);
     addHallSeats.mutate({
       name: data.name,
-      cinemaHallId: hallSeats.id,
+      cinemaHallId: hallSeats?.id!,
       numberOfRows: parseInt(data.rows),
       numberOfSeats: parseInt(data.seats),
     });
   }
 
   async function updateSeats(data: Inputs) {
-    console.log("data edit", data);
-
     updateHallSeats.mutate({
       id: data.id,
       name: data.name,
@@ -79,6 +90,7 @@ export default function AddEditHallSeats() {
       numberOfSeats: parseInt(data.seats),
     });
     setIsAddMode(true);
+    reset();
   }
 
   console.log(isAddMode);
@@ -92,65 +104,50 @@ export default function AddEditHallSeats() {
           <button className="btn btn-sm btn-primary">Go Back</button>
         </Link>
       </div>
-      <div className=" w-full">
+      <div className="w-full flex flex-col space-y-16">
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex space-x-5 items-center">
+            <label>Name:</label>
+            <input {...register("name")} className="bg-zinc-800 p-2 " />
+            <label>Rows:</label>
+            <input
+              {...register("rows")}
+              className="bg-zinc-800 p-2 pl-4 w-16"
+              type="number"
+              min="0"
+            />
+            <label>Seats:</label>
+            <input
+              type="number"
+              {...register("seats")}
+              className="bg-zinc-800 p-2 pl-4 w-16"
+              min="0"
+            />
+
             <div>
-              <input
-                {...register("name")}
-                className="bg-zinc-800 p-2 w-full"
-                placeholder="name"
-              />
-              <input
-                {...register("rows")}
-                className="bg-zinc-800 p-2 w-full"
-                placeholder="row"
-                type="number"
-                min="0"
-              />
-              <input
-                type="number"
-                {...register("seats")}
-                className="bg-zinc-800 p-2 w-full"
-                placeholder="seats"
-                min="0"
-              />
-            </div>
-            <div>
-              <input type="submit" className="btn btn-primary" />
+              <button className="bg-orange-500 p-2 rounded-md">
+                {isAddMode ? "Submit" : "Edit"}
+              </button>
+              {!isAddMode && (
+                <button
+                  className="p-2 border border-zinc-700 rounded-md ml-2"
+                  onClick={() => {
+                    setIsAddMode(true);
+                    reset();
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
         </form>
-        {hallSeats.seats.map((seat) => (
-          <div className="flex space-x-6">
-            <span>Id: {seat.id}</span>
-            <span>Name: {seat.name}</span>
-            <span>Rows: {seat.numberOfRows}</span>
-            <span>Number seats in row: {seat.numberOfSeats}</span>
-            <button
-              onClick={() => {
-                setIsAddMode(false);
-                setValue("id", seat.id);
-                setValue("name", seat.name);
-                setValue("rows", seat.numberOfRows);
-                setValue("seats", seat.numberOfSeats);
-              }}
-              className="btn btn-error btn-sm"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                deleteSeats(seat.id);
-              }}
-              className="btn btn-error btn-sm"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
 
-        <SeatAdmin seatsIn={hallSeats?.seats} />
+        <SeatAdmin
+          seatsIn={hallSeats?.seats}
+          deleteSeats={deleteSeats}
+          updateSeatRow={updateSeatRow}
+        />
       </div>
     </>
   );

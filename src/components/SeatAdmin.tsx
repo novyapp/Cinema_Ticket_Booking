@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function SeatAdmin({ seatsIn }) {
+export default function SeatAdmin({ seatsIn, deleteSeats, updateSeatRow }) {
   const createSeats = (rows: number, startIndex: number, endIndex: string) => {
     let i = 0;
     let j = startIndex;
@@ -44,17 +44,40 @@ export default function SeatAdmin({ seatsIn }) {
         const hallSeaction = createSeats(numOfRows, indexRows, nti);
 
         return (
-          <div key={seatsTypes.id} className={fd}>
-            {hallSeaction.map((seat, i) => {
-              return (
-                <span
-                  key={seat}
-                  className={`bg-zinc-300 w-10 h-10 text-zinc-500 flex items-center justify-center font-semibold rounded-md `}
-                >
-                  {seat}
-                </span>
-              );
-            })}
+          <div
+            key={seatsTypes.id}
+            className="flex flex-row space-x-6 items-center"
+          >
+            <div className="flex flex-col items-center">
+              <span className="font-semibold">Name:</span>{" "}
+              <span>{seatsTypes.name}</span>
+            </div>
+            <div className={fd}>
+              {hallSeaction.map((seat, i) => {
+                return (
+                  <span
+                    key={seat}
+                    className={`bg-zinc-300 w-10 h-10 text-zinc-500 flex items-center justify-center font-semibold rounded-md `}
+                  >
+                    {seat}
+                  </span>
+                );
+              })}
+            </div>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => updateSeatRow(seatsTypes)}
+                className="bg-orange-600 p-2 rounded-md"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteSeats(seatsTypes.id)}
+                className="bg-red-600 p-2 rounded-md"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         );
       })}
