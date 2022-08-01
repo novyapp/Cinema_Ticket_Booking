@@ -15,10 +15,10 @@ type Inputs = {
 };
 export { AddEditHallSeats };
 
-export default function AddEditHallSeats() {
+export default function AddEditHallSeats({ cinemaHall }) {
   const utils = trpc.useContext();
 
-  const [isAddMode, setIsAddMode] = useState(true);
+  const [isAddModeSeats, setIsAddModeSeats] = useState(true);
   const {
     register,
     handleSubmit,
@@ -30,7 +30,7 @@ export default function AddEditHallSeats() {
   const { data: hallSeats, isLoading: isLoadingHallSeats } = trpc.useQuery([
     "cinema.get-halls-seats",
     {
-      id: "cl66egllv0141sovn1kf94p19",
+      id: cinemaHall.id,
     },
   ]);
   const addHallSeats = trpc.useMutation("cinema.add-seats-to-hall", {
@@ -61,7 +61,7 @@ export default function AddEditHallSeats() {
     numberOfRows: string;
     numberOfSeats: string;
   }) => {
-    setIsAddMode(false);
+    setIsAddModeSeats(false);
     setValue("id", seat.id);
     setValue("name", seat.name);
     setValue("rows", seat.numberOfRows);
@@ -69,7 +69,7 @@ export default function AddEditHallSeats() {
   };
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    return isAddMode ? createSeats(data) : updateSeats(data);
+    return isAddModeSeats ? createSeats(data) : updateSeats(data);
   };
 
   async function createSeats(data: Inputs) {
@@ -89,11 +89,11 @@ export default function AddEditHallSeats() {
       numberOfRows: parseInt(data.rows),
       numberOfSeats: parseInt(data.seats),
     });
-    setIsAddMode(true);
+    setIsAddModeSeats(true);
     reset();
   }
 
-  console.log(isAddMode);
+  console.log(isAddModeSeats);
 
   if (isLoadingHallSeats) return null;
   return (
@@ -104,9 +104,9 @@ export default function AddEditHallSeats() {
           <button className="btn btn-sm btn-primary">Go Back</button>
         </Link>
       </div>
-      <div className="w-full flex flex-col space-y-16">
+      <div className="w-full flex flex-col space-y-16 items-center pb-20">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex space-x-5 items-center">
+          <div className="flex space-x-5 items-center h-12">
             <label>Name:</label>
             <input {...register("name")} className="bg-zinc-800 p-2 " />
             <label>Rows:</label>
@@ -126,13 +126,13 @@ export default function AddEditHallSeats() {
 
             <div>
               <button className="bg-orange-500 p-2 rounded-md">
-                {isAddMode ? "Submit" : "Edit"}
+                {isAddModeSeats ? "Submit" : "Edit"}
               </button>
-              {!isAddMode && (
+              {!isAddModeSeats && (
                 <button
                   className="p-2 border border-zinc-700 rounded-md ml-2"
                   onClick={() => {
-                    setIsAddMode(true);
+                    setIsAddModeSeats(true);
                     reset();
                   }}
                 >
