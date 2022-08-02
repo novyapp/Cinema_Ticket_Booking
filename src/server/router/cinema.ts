@@ -1,10 +1,29 @@
 import { createRouter } from "./context";
 import { z } from "zod";
+import Input from "react-select/dist/declarations/src/components/Input";
 
 export const cinemaRouter = createRouter()
-  .query("get-cinemas", {
-    async resolve({ ctx }) {
-      return await ctx.prisma.cinema.findMany({
+  .query("get-cinema", {
+    input: z.object({
+      id: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      return await ctx.prisma.cinema.findUnique({
+        where: {
+          id: input.id,
+        },
+      });
+    },
+  })
+  .query("get-halls-in-cinema", {
+    input: z.object({
+      id: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      return await ctx.prisma.cinemaHall.findMany({
+        where: {
+          cinemaId: input.id,
+        },
         orderBy: {
           name: "asc",
         },
@@ -118,6 +137,37 @@ export const cinemaRouter = createRouter()
         data: {
           name: input.name,
           cinemaId: input.cinemaId,
+        },
+      });
+      return result;
+    },
+  })
+  .mutation("update-hall", {
+    input: z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      const result = await ctx.prisma.cinemaHall.update({
+        where: {
+          id: input.id,
+        },
+        data: {
+          name: input.name,
+        },
+      });
+      return result;
+    },
+  })
+  .mutation("delete-hall", {
+    input: z.object({
+      id: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      console.log(input);
+      const result = await ctx.prisma.cinemaHall.delete({
+        where: {
+          id: input.id,
         },
       });
       return result;

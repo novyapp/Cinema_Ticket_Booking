@@ -19,6 +19,7 @@ export default function AddEditHallSeats({ cinemaHall }) {
   const utils = trpc.useContext();
 
   const [isAddModeSeats, setIsAddModeSeats] = useState(true);
+
   const {
     register,
     handleSubmit,
@@ -93,14 +94,12 @@ export default function AddEditHallSeats({ cinemaHall }) {
     reset();
   }
 
-  console.log(isAddModeSeats);
-
   if (isLoadingHallSeats) return null;
   return (
     <>
       <div className="flex flex-row items-center mb-4 justify-between px-3">
         <h1 className="text-2xl">Seats in hall: {hallSeats?.name}</h1>
-        <Link href="/dashboard/seats" className="ml-auto">
+        <Link href="/dashboard/cinema" className="ml-auto">
           <button className="btn btn-sm btn-primary">Go Back</button>
         </Link>
       </div>
@@ -142,7 +141,11 @@ export default function AddEditHallSeats({ cinemaHall }) {
             </div>
           </div>
         </form>
-
+        {hallSeats?.seats.length === 0 && (
+          <div className="text-zinc-400">
+            There is no seats plan for this hall
+          </div>
+        )}
         <SeatAdmin
           seatsIn={hallSeats?.seats}
           deleteSeats={deleteSeats}
