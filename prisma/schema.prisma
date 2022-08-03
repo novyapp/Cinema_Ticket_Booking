@@ -62,6 +62,7 @@ model VerificationToken {
 model Movie {
     id          String        @id @unique @default(cuid())
     title       String
+    slug        String
     price       Int
     movieSeance MovieSeance[]
 }

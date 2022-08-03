@@ -1,11 +1,7 @@
 import React from "react";
 
-export default function Seat({
-  selectedSeats,
-  movie,
-  seatsIn,
-  handleSelectedState,
-}) {
+export default function Seat({ selectedSeats, movie, handleSelectedState }) {
+  console.log("SIN", movie);
   const createSeats = (rows: number, startIndex: number, endIndex: string) => {
     let i = 0;
     let j = startIndex;
@@ -33,7 +29,7 @@ export default function Seat({
 
   return (
     <div className="flex flex-col items-center space-y-8">
-      {seatsIn.map((seatsTypes, i, array) => {
+      {movie.cinemaHall.seats.map((seatsTypes, i, array) => {
         const nti = intToChar(seatsTypes.numberOfSeats - 1);
         const prev = array[i - 1];
 

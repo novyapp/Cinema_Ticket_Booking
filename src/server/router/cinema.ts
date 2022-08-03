@@ -195,17 +195,20 @@ export const cinemaRouter = createRouter()
       id: z.string(),
     }),
     async resolve({ ctx, input }) {
-      return await ctx.prisma.movieSeance.findMany({
+      return await ctx.prisma.movie.findUnique({
         where: {
-          movieId: input.id,
+          id: input.id,
         },
         include: {
-          cinemaHall: {
+          movieSeance: {
             include: {
-              movieSeance: true,
-              seats: {
-                orderBy: {
-                  name: "asc",
+              cinemaHall: {
+                include: {
+                  seats: {
+                    orderBy: {
+                      name: "asc",
+                    },
+                  },
                 },
               },
             },
