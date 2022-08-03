@@ -93,6 +93,8 @@ model Seats {
 model MovieSeance {
     id           String     @id @unique @default(cuid())
     date         DateTime
+    startDate    DateTime   @default(now())
+    endDdate     DateTime   @default(now())
     takenSeats   String[]
     cinemaHall   CinemaHall @relation(fields: [cinemaHallId], references: [id])
     cinemaHallId String

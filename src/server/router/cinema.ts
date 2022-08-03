@@ -185,6 +185,35 @@ export const cinemaRouter = createRouter()
       });
     },
   })
+  .query("get-seanses", {
+    async resolve({ ctx, input }) {
+      return await ctx.prisma.movieSeance.findMany();
+    },
+  })
+  .query("get-movie-seanses", {
+    input: z.object({
+      id: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      return await ctx.prisma.movieSeance.findMany({
+        where: {
+          movieId: input.id,
+        },
+        include: {
+          cinemaHall: {
+            include: {
+              movieSeance: true,
+              seats: {
+                orderBy: {
+                  name: "asc",
+                },
+              },
+            },
+          },
+        },
+      });
+    },
+  })
   .query("get-hall-sections", {
     input: z.object({
       id: z.string(),

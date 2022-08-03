@@ -86,8 +86,8 @@ export default function App({ data }) {
                     : null
                 }`}
               >
-                <span>{seans.date.getMinutes()}</span>
-                <span> {seans.date.toLocaleTimeString()}</span>
+                <span>{seans.startDate.getMinutes()}</span>
+                <span> {seans.startDate.toLocaleTimeString()}</span>
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ export default function App({ data }) {
                 value={mov.id}
                 className="text-zinc-200 bg-zinc-700"
               >
-                {mov.date.toLocaleTimeString()}
+                {mov.startDate.toLocaleTimeString()}
               </option>
             ))}
           </select>

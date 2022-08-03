@@ -7,3 +7,8 @@
     @apply text-white bg-[#212121];
   }
 }
+@layer components {
+  .rbc-calendar {
+    @apply !bg-white text-red-600;
+  }
+}
