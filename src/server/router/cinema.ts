@@ -201,7 +201,11 @@ export const cinemaRouter = createRouter()
         },
         include: {
           movieSeance: {
+            orderBy: {
+              startDate: "asc",
+            },
             include: {
+              Movie: true,
               cinemaHall: {
                 include: {
                   seats: {

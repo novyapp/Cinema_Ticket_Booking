@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Seat from "../../components/Seat";
 import { trpc } from "../../utils/trpc";
 import moment from "moment";
+import _, { map } from "underscore";
 
 interface CinemaType {
   movie: object | undefined;
@@ -46,7 +47,19 @@ export default function App({ data }) {
     { id: "cl66eii3m0215sovnoi1hteov" },
   ]);
 
-  console.log("movieses", movieSes);
+  const defta = movieSes?.movieSeance;
+  const movieSeansByDay = _.groupBy(defta, function (se) {
+    return moment(se["startDate"]).startOf("day").format();
+  });
+
+  const movieSeansByDayResult = _.map(movieSeansByDay, function (group, day) {
+    return {
+      day: day,
+      times: group,
+    };
+  });
+
+  //console.log(movieSeansByDayResult);
 
   const utils = trpc.useContext();
   const updateseats = trpc.useMutation("movie.update-movie", {
@@ -69,63 +82,90 @@ export default function App({ data }) {
   }, [isLoading]);
 
   const Movies = ({ movie, onChange }: MoviesType) => {
-    const [activeId, setActiveId] = useState(movie?.id);
-    //console.log(movie);
+    console.log(movie);
+    const [activeTimeId, setActiveTimeId] = useState(movie?.id);
+
     return (
       <>
         <div>
-          <div className="flex">
-            {movieSes?.movieSeance.map((seans) => (
-              <div
-                key={seans.id}
-                onClick={() => {
-                  setSelectedMovie(seans);
-                  setActiveId(seans.id);
-                }}
-                className={`bg-zinc-800 p-6 m-2 flex flex-col rounded-md p-2${
-                  activeId === seans.id
-                    ? "flex bg-gradient-to-t from-pink-700 to-pink-500"
-                    : null
-                }`}
-              >
-                <span>{seans.cinemaHall.name}</span>
-                <span>{moment(seans.startDate).format("LT")}</span>
+          {movieSeansByDayResult.map((days) => (
+            <div className="flex">
+              <div className="p-2 px-4 m-2 border-pink-500 border flex rounded-md justify-center items-center">
+                {moment(days.day).format("D MMMM")}
               </div>
-            ))}
+              <div className="flex">
+                {days.times.map((time) => (
+                  <div
+                    onClick={() => {
+                      setSelectedMovie(time);
+                      setActiveTimeId(time.id);
+                      setSelectedSeats([]);
+                    }}
+                    className={`bg-zinc-800 p-6 m-2 flex flex-col items-center rounded-md p-2${
+                      activeTimeId === time.id
+                        ? "flex bg-gradient-to-t from-pink-700 to-pink-500"
+                        : null
+                    }`}
+                  >
+                    <span className="text-xs">{time.cinemaHall.name}</span>
+                    <span className="font-semibold">
+                      {moment(time.startDate).format("H:mm")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="mt-6">
+            <label>Number of tickets: </label>
+            <input
+              className="text-zinc-200 bg-zinc-700 p-2 rounded-md w-20"
+              type="number"
+              value={numberOfSeats}
+              onChange={(ev) =>
+                setNumberOfSeats(ev.target.value as unknown as number)
+              }
+            />
           </div>
-        </div>
-        <div className="flex  justify-center items-center space-x-4">
-          <label htmlFor="movie">Start time:</label>
-          <select
-            className="text-zinc-200 bg-zinc-700 p-2 rounded-md"
-            id="movie"
-            value={movie?.id}
-            onChange={(e) => {
-              onChange(
-                movieSes.movieSeance.find((mov) => mov.id === e.target.value)
-              );
-            }}
-          >
-            {movieSes?.movieSeance.map((mov) => (
-              <option
-                key={mov.id}
-                value={mov.id}
-                className="text-zinc-200 bg-zinc-700"
-              >
-                {mov.startDate.toLocaleTimeString()}
-              </option>
-            ))}
-          </select>
-          <label>Number of tickets: </label>
-
-          <input
-            className="text-zinc-200 bg-zinc-700 p-2 rounded-md w-20"
-            type="number"
-            value={numberOfSeats}
-            onChange={(ev) =>
-              setNumberOfSeats(ev.target.value as unknown as number)
-            }
-          />
+          <div className="p-4 rounded-md bg-zinc-800 flex flex-col my-4 space-y-2">
+            <h3 className="font-semibold text-2xl">
+              {selectedMovie?.Movie.title}
+            </h3>
+            <div className="flex space-x-4 text-sm pb-4">
+              <span>
+                Day: {moment(selectedMovie?.startDate).format(" DD/MM")}
+              </span>
+              <span>
+                Time:{moment(selectedMovie?.startDate).format(" H:mm")}
+              </span>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <h4 className="bg-zinc-700 rounded-md p-2">Selected seats</h4>
+              <div className="flex items-end space-x-2">
+                {selectedSeats.map((seat) => (
+                  <div className="border-zinc-700 border  rounded-md p-2 flex w-10 h-10 justify-center items-center">
+                    {seat}
+                  </div>
+                ))}
+                {!selectedSeats.length && (
+                  <div className="border-zinc-700 border rounded-md text-sm text-zinc-600 p-2 flex h-10 w-full justify-center items-center">
+                    You didn't select any seats
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center pt-4">
+                <button
+                  onClick={confirmBooking}
+                  className="rounded-md p-2 bg-gradient-to-l from-pink-500 to bg-pink-600 font-semibold text-white w-32 "
+                >
+                  Book tickets
+                </button>
+                <div className="ml-auto pr-2 text-xl">
+                  To pay: ${selectedMovie?.Movie.price * selectedSeats.length}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -147,7 +187,7 @@ export default function App({ data }) {
   if (!movieSes && isLoading) return null;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[100vh] bg-zinc-900/90">
+    <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[120vh] ">
       <main className="relative px-4 pb-24 lg:space-y-24 lg:px-36 ">
         <div className="flex flex-col space-y-4 py-24 md:space-y-4 lg:h-[90vh] lg:pb-24 ">
           <div className="absolute top-0 left-0 -z-10 h-[55vh]  md:h-[85vh] w-screen ">
@@ -159,14 +199,15 @@ export default function App({ data }) {
               objectFit="cover"
             />
           </div>
-          <div className="grid grid-cols-2">
+
+          <div className="flex flex-col space-y-6 md:min-h-[70vh] md:w-[70vh]">
+            <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-pink-400">
+              {data.original_title}
+            </h1>
+            <p>{data.overview}</p>
+          </div>
+          <div className="flex py-16 justify-evenly w-full min-h-screen">
             <div className="flex flex-col space-y-6">
-              <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-blue-400">
-                {data.original_title}
-              </h1>
-              <p>{data.overview}</p>
-            </div>
-            <div className="flex flex-col space-y-6 items-center">
               <Movies
                 movie={selectedMovie}
                 onChange={(movie) => {
@@ -174,8 +215,11 @@ export default function App({ data }) {
                   setSelectedMovie(movie);
                 }}
               />
-
-              <ShowCase />
+            </div>
+            <div className="flex flex-col space-y-6 justify-start w-[50vh]">
+              <div className="mt-3 mb-8 bg-pink-500 shadow-xl shadow-pink-500/50 rounded-md justify-center flex p-2 text-xs text-pink-200 font-semibold">
+                SCREEN
+              </div>
               <Cinema
                 movie={selectedMovie}
                 numberOfSeats={numberOfSeats}
@@ -184,12 +228,7 @@ export default function App({ data }) {
                   selectedSeats: React.SetStateAction<never[]>
                 ) => setSelectedSeats(selectedSeats)}
               />
-              <button
-                onClick={confirmBooking}
-                className="rounded-md p-2 !bg-gradient-to-b !from-pink-500 to !bg-pink-600 font-semibold text-white w-32"
-              >
-                Book seats
-              </button>
+              <ShowCase />
             </div>
           </div>
         </div>
@@ -228,7 +267,6 @@ function Cinema({
     const isSelected = selectedSeats.includes(seat);
 
     const test = numberOfSeats;
-    console.log(test);
 
     if (seatsToBook >= selectedSeats.length) {
       if (isSelected) {

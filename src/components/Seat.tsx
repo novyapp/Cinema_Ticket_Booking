@@ -1,7 +1,6 @@
 import React from "react";
 
 export default function Seat({ selectedSeats, movie, handleSelectedState }) {
-  console.log("SIN", movie);
   const createSeats = (rows: number, startIndex: number, endIndex: string) => {
     let i = 0;
     let j = startIndex;
