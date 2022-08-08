@@ -8,52 +8,59 @@ import _, { map } from "underscore";
 import Layout from "../../components/Layout";
 import ReactPlayer from "react-player";
 import { prisma } from "../../server/db/client";
+import type Prisma from "@prisma/client";
 
-interface CinemaType {
-  movie: object | undefined;
-  numberOfSeats: string | number;
-  selectedSeats: string[];
-  onSelectedSeatsChange: Function;
-}
-interface MoviesType {
-  movie:
-    | {
-        id: string;
-        name: string;
-        takenSeats: string[] | undefined;
-      }
-    | null
-    | undefined;
-  onChange: (movie: {
-    id: string;
-    name: string;
-    takenSeats: string[] | undefined;
-    date: string;
-    cinemaHallId: string;
-    movieId: string;
-  }) => void;
-}
-export async function getServerSideProps({ params }) {
+type MovieProps = Readonly<Prisma.Movie> | undefined;
+type SeanseProps = Readonly<Prisma.MovieSeance> | undefined;
+type HallProps = Readonly<Prisma.CinemaHall> | undefined;
+
+type dataTmdb = {
+  overview: string;
+  spoken_languages: any;
+  english_name: string;
+  genres: {
+    map(
+      arg0: (genre: { id: string; name: string }) => JSX.Element
+    ): React.ReactNode;
+  };
+  original_title: string;
+  poster_path: string;
+  backdrop_path: string;
+  videos: any;
+  type: string;
+};
+
+export async function getServerSideProps({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const moviedata = await prisma.movie.findFirst({
     where: {
       slug: params.slug,
     },
   });
   const res = await fetch(
-    `https://api.themoviedb.org/3/movie/${moviedata.tmdbId}?api_key=${process.env.TMDB_API}&language=en-US&append_to_response=videos`
+    `https://api.themoviedb.org/3/movie/${moviedata?.tmdbId}?api_key=${process.env.TMDB_API}&language=en-US&append_to_response=videos`
   );
   const data = await res.json();
   return { props: { data, moviedata } };
 }
 
-export default function App({ data, moviedata }) {
+export default function App({
+  data,
+  moviedata,
+}: {
+  data: dataTmdb;
+  moviedata: any;
+}) {
   const { data: movieSes, isLoading: isLoading } = trpc.useQuery([
     "cinema.get-movie-seanses",
     { id: moviedata.id },
   ]);
 
   const defta = movieSes?.movieSeance;
-  const movieSeansByDay = _.groupBy(defta, function (se) {
+  const movieSeansByDay = _.groupBy(defta as any, function (se) {
     return moment(se["startDate"]).startOf("day").format();
   });
 
@@ -69,47 +76,42 @@ export default function App({ data, moviedata }) {
   const utils = trpc.useContext();
   const updateseats = trpc.useMutation("movie.update-movie", {
     onSuccess() {
-      utils.invalidateQueries("cinema.get-movie-seanses", {
-        id: "cl66eii3m0215sovnoi1hteov",
-      });
+      utils.invalidateQueries("cinema.get-movie-seanses");
     },
   });
   const deftime = movieSes?.movieSeance[0];
+  console.log(deftime);
 
-  const [selectedMovie, setSelectedMovie] = useState<MovieSeance | undefined>(
-    deftime
-  );
-
+  const [selectedMovie, setSelectedMovie] = useState(deftime);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [numberOfSeats, setNumberOfSeats] = useState(2);
-
+  const [numberOfSeats, setNumberOfSeats] = useState("2");
   const [trailer, setTrailer] = useState();
 
   useEffect(() => {
     if (data?.videos) {
       const index = data.videos.results.findIndex(
-        (element: Element) => element.type === "Trailer"
+        (element: { type: string }) => element.type === "Trailer"
       );
       setTrailer(data.videos?.results[index]?.key);
     }
     setSelectedMovie(deftime);
   }, [isLoading]);
 
-  const Movies = ({ movie, onChange }: MoviesType) => {
-    //console.log(movie);
+  const Movies = ({ movie, onChange }: { movie: any; onChange: Function }) => {
     const [activeTimeId, setActiveTimeId] = useState(movie?.id);
 
     return (
       <>
         <div>
           {movieSeansByDayResult.map((days) => (
-            <div className="flex flex-col xl:flex-row">
+            <div key={days.day} className="flex flex-col xl:flex-row">
               <div className="p-2 px-4 m-2 border-pink-500 flex border rounded-md justify-center items-center">
                 {moment(days.day).format("D MMMM")}
               </div>
               <div className="flex flex-wrap">
                 {days.times.map((time) => (
                   <div
+                    key={time.id}
                     onClick={() => {
                       setSelectedMovie(time);
                       setActiveTimeId(time.id);
@@ -136,9 +138,7 @@ export default function App({ data, moviedata }) {
               className="text-zinc-200 bg-zinc-700 p-2 rounded-md w-20"
               type="number"
               value={numberOfSeats}
-              onChange={(ev) =>
-                setNumberOfSeats(ev.target.value as unknown as number)
-              }
+              onChange={(ev) => setNumberOfSeats(ev.target.value)}
             />
           </div>
           <div className="p-4 rounded-md bg-zinc-800 flex flex-col my-4 space-y-2">
@@ -157,13 +157,16 @@ export default function App({ data, moviedata }) {
               <h4 className="bg-zinc-700 rounded-md p-2">Selected seats</h4>
               <div className="flex items-end space-x-2">
                 {selectedSeats.map((seat) => (
-                  <div className="border-zinc-700 border  rounded-md p-2 flex w-10 h-10 justify-center items-center">
+                  <div
+                    key={seat}
+                    className="border-zinc-700 border  rounded-md p-2 flex w-10 h-10 justify-center items-center"
+                  >
                     {seat}
                   </div>
                 ))}
                 {!selectedSeats.length && (
                   <div className="border-zinc-700 border rounded-md text-sm text-zinc-600 p-2 flex h-10 w-full justify-center items-center">
-                    You didn't select any seats
+                    You didnt select any seats
                   </div>
                 )}
               </div>
@@ -175,7 +178,7 @@ export default function App({ data, moviedata }) {
                   Book tickets
                 </button>
                 <div className="ml-auto pr-2 text-xl">
-                  To pay: ${selectedMovie?.Movie.price * selectedSeats.length}
+                  To pay: ${selectedMovie?.Movie.price! * selectedSeats.length}
                 </div>
               </div>
             </div>
@@ -186,13 +189,16 @@ export default function App({ data, moviedata }) {
   };
 
   const confirmBooking = () => {
-    const newAvailableSeats = [...selectedMovie.takenSeats, ...selectedSeats];
+    const newAvailableSeats = [
+      ...(selectedMovie?.takenSeats ?? []),
+      ...selectedSeats,
+    ];
     console.log("new seats", newAvailableSeats);
     setSelectedMovie((mov) =>
       mov?.id ? { ...mov, takenSeats: newAvailableSeats } : mov
     );
     updateseats.mutate({
-      id: selectedMovie?.id,
+      id: selectedMovie?.id!,
       seats: selectedSeats,
     });
 
@@ -210,6 +216,7 @@ export default function App({ data, moviedata }) {
                 src={`https://image.tmdb.org/t/p/original/${
                   data?.backdrop_path || data?.poster_path
                 }`}
+                alt="Background image"
                 layout="fill"
                 objectFit="cover"
               />
@@ -237,7 +244,7 @@ export default function App({ data, moviedata }) {
                   <div className="flex space-x-2">
                     <span className="font-semibold">Language:</span>
                     <span className="flex rounded-md bg-zinc-800 p-1 text-xs px-4">
-                      {data.spoken_languages[0].english_name}
+                      {data.spoken_languages[0]?.english_name}
                     </span>
                   </div>
                 </div>
@@ -267,12 +274,22 @@ export default function App({ data, moviedata }) {
                   The movie is not currently displayed
                 </div>
               )}
-              {movieSes?.movieSeance.length > 0 && (
+              {movieSes?.movieSeance.length! > 0 && (
                 <>
                   <div className="flex flex-col space-y-6 md:w-[50%]">
                     <Movies
                       movie={selectedMovie}
-                      onChange={(movie) => {
+                      onChange={(
+                        movie: React.SetStateAction<
+                          | (MovieSeance & {
+                              Movie: Prisma.Movie;
+                              cinemaHall: Prisma.CinemaHall & {
+                                seats: Prisma.Seats[];
+                              };
+                            })
+                          | undefined
+                        >
+                      ) => {
                         setSelectedSeats([]);
                         setSelectedMovie(movie);
                       }}
@@ -326,12 +343,16 @@ function Cinema({
   numberOfSeats,
   selectedSeats,
   onSelectedSeatsChange,
-}: CinemaType) {
+}: {
+  movie: object | undefined;
+  numberOfSeats: string;
+  selectedSeats: string[];
+  onSelectedSeatsChange: Function;
+}) {
+  console.log(typeof numberOfSeats);
   function handleSelectedState(seat: string) {
-    const seatsToBook = parseInt(numberOfSeats as string, 10);
+    const seatsToBook = parseInt(numberOfSeats, 10);
     const isSelected = selectedSeats.includes(seat);
-
-    const test = numberOfSeats;
 
     if (seatsToBook >= selectedSeats.length) {
       if (isSelected) {

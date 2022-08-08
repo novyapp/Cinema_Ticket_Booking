@@ -13,9 +13,13 @@ type Inputs = {
   rows: string;
   seats: string;
 };
+type paraProp = {
+  cinemaHall: { id: string };
+};
+
 export { AddEditHallSeats };
 
-export default function AddEditHallSeats({ cinemaHall }) {
+export default function AddEditHallSeats({ cinemaHall }: paraProp) {
   const utils = trpc.useContext();
 
   const [isAddModeSeats, setIsAddModeSeats] = useState(true);

@@ -1,6 +1,15 @@
 import React from "react";
 
-export default function SeatAdmin({ seatsIn, deleteSeats, updateSeatRow }) {
+export default function SeatAdmin({
+  seatsIn,
+  deleteSeats,
+  updateSeatRow,
+}: {
+  seatsIn: any;
+  deleteSeats: Function;
+  updateSeatRow: Function;
+}) {
+  console.log("SI", seatsIn);
   const createSeats = (rows: number, startIndex: number, endIndex: string) => {
     let i = 0;
     let j = startIndex;
@@ -19,7 +28,7 @@ export default function SeatAdmin({ seatsIn, deleteSeats, updateSeatRow }) {
     }
     return section;
   };
-  function intToChar(int) {
+  function intToChar(int: number) {
     const code = "A".charCodeAt(0);
     return String.fromCharCode(code + int);
   }
@@ -28,59 +37,81 @@ export default function SeatAdmin({ seatsIn, deleteSeats, updateSeatRow }) {
 
   return (
     <div className="flex flex-col items-center space-y-8">
-      {seatsIn.map((seatsTypes, i, array) => {
-        const nti = intToChar(seatsTypes.numberOfSeats - 1);
-        const prev = array[i - 1];
+      {seatsIn.map(
+        (
+          seatsTypes: {
+            numberOfSeats: number;
+            numberOfRows: number;
+            id: React.Key | null | undefined;
+            name:
+              | string
+              | number
+              | boolean
+              | React.ReactElement<
+                  any,
+                  string | React.JSXElementConstructor<any>
+                >
+              | React.ReactFragment
+              | React.ReactPortal
+              | null
+              | undefined;
+          },
+          i: number,
+          array: any[]
+        ) => {
+          const nti = intToChar(seatsTypes.numberOfSeats - 1);
+          const prev = array[i - 1];
 
-        const numOfRows = (initRow += seatsTypes.numberOfRows);
-        const indexRows = i === 0 ? initInd : (initInd += prev.numberOfRows);
+          const numOfRows = (initRow += seatsTypes.numberOfRows);
+          const indexRows = i === 0 ? initInd : (initInd += prev.numberOfRows);
 
-        function getNumofCols() {
-          const num = seatsTypes.numberOfSeats;
-          return "grid-cols-" + num;
+          function getNumofCols() {
+            const num = seatsTypes.numberOfSeats;
+            return "grid-cols-" + num;
+          }
+
+          const fd = `grid gap-2 ${getNumofCols()}`;
+          const hallSeaction = createSeats(numOfRows, indexRows, nti);
+
+          return (
+            <div
+              key={seatsTypes.id}
+              className="flex flex-row space-x-6 items-center"
+            >
+              <div className="flex flex-col items-center">
+                <span className="font-semibold">Name:</span>{" "}
+                <span>{seatsTypes.name}</span>
+              </div>
+              <div className={fd}>
+                {hallSeaction.map((seat, i) => {
+                  return (
+                    <span
+                      key={seat}
+                      className={`bg-zinc-300 w-10 h-10 text-zinc-500 flex items-center justify-center font-semibold rounded-md `}
+                    >
+                      {seat}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => updateSeatRow(seatsTypes)}
+                  className="bg-orange-600 p-2 rounded-md"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteSeats(seatsTypes.id)}
+                  className="bg-red-600 p-2 rounded-md"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
         }
-
-        const fd = `grid gap-2 ${getNumofCols()}`;
-        const hallSeaction = createSeats(numOfRows, indexRows, nti);
-
-        return (
-          <div
-            key={seatsTypes.id}
-            className="flex flex-row space-x-6 items-center"
-          >
-            <div className="flex flex-col items-center">
-              <span className="font-semibold">Name:</span>{" "}
-              <span>{seatsTypes.name}</span>
-            </div>
-            <div className={fd}>
-              {hallSeaction.map((seat, i) => {
-                return (
-                  <span
-                    key={seat}
-                    className={`bg-zinc-300 w-10 h-10 text-zinc-500 flex items-center justify-center font-semibold rounded-md `}
-                  >
-                    {seat}
-                  </span>
-                );
-              })}
-            </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => updateSeatRow(seatsTypes)}
-                className="bg-orange-600 p-2 rounded-md"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => deleteSeats(seatsTypes.id)}
-                className="bg-red-600 p-2 rounded-md"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        );
-      })}
+      )}
     </div>
   );
 }

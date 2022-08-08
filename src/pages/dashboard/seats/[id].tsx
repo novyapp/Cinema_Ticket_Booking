@@ -3,8 +3,12 @@ import { prisma } from "../../../server/db/client";
 
 export default AddEditHallSeats;
 
-export async function getServerSideProps({ params }: any) {
-  const cinemaHall = await prisma.cinemaHall.findUnique({
+type paraProp = {
+  params: { id: string };
+};
+
+export async function getServerSideProps({ params }: paraProp) {
+  const cinemaHall = await prisma.cinemaHall.findFirst({
     where: {
       id: params.id,
     },

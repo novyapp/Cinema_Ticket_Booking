@@ -12,7 +12,7 @@ const max = new Date(
   21
 );
 
-export default function MovieCalendar({ seans, halls }) {
+export default function MovieCalendar({ seans, halls }: any) {
   const styles = {
     background: "#fff",
     padding: "2em",
@@ -33,7 +33,7 @@ export default function MovieCalendar({ seans, halls }) {
         style={styles}
         defaultView={Views.DAY}
         views={[Views.DAY, Views.WEEK, Views.MONTH]}
-        steps={60}
+        step={60}
         defaultDate={new Date(2022, 7, 2)}
         min={min}
         max={max}

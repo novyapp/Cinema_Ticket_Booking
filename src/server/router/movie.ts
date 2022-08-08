@@ -32,14 +32,14 @@ export const movieRouter = createRouter()
           id: input.id,
         },
         include: {
-          movie: true,
+          Movie: true,
         },
       });
     },
   })
   .mutation("update-movie", {
     input: z.object({
-      id: z.string().optional(),
+      id: z.string(),
       seats: z.any(),
     }),
     async resolve({ input }) {
