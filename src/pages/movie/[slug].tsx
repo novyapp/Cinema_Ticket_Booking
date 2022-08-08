@@ -5,6 +5,9 @@ import Seat from "../../components/Seat";
 import { trpc } from "../../utils/trpc";
 import moment from "moment";
 import _, { map } from "underscore";
+import Layout from "../../components/Layout";
+import ReactPlayer from "react-player";
+import { prisma } from "../../server/db/client";
 
 interface CinemaType {
   movie: object | undefined;
@@ -30,21 +33,23 @@ interface MoviesType {
     movieId: string;
   }) => void;
 }
-export async function getServerSideProps() {
-  // Fetch data from external API
+export async function getServerSideProps({ params }) {
+  const moviedata = await prisma.movie.findFirst({
+    where: {
+      slug: params.slug,
+    },
+  });
   const res = await fetch(
-    "https://api.themoviedb.org/3/movie/361743?api_key=6c1990d663f2b81dc2690366937da078&language=en-US"
+    `https://api.themoviedb.org/3/movie/${moviedata.tmdbId}?api_key=${process.env.TMDB_API}&language=en-US&append_to_response=videos`
   );
   const data = await res.json();
-
-  // Pass data to the page via props
-  return { props: { data } };
+  return { props: { data, moviedata } };
 }
 
-export default function App({ data }) {
+export default function App({ data, moviedata }) {
   const { data: movieSes, isLoading: isLoading } = trpc.useQuery([
     "cinema.get-movie-seanses",
-    { id: "cl66eii3m0215sovnoi1hteov" },
+    { id: moviedata.id },
   ]);
 
   const defta = movieSes?.movieSeance;
@@ -74,26 +79,35 @@ export default function App({ data }) {
   const [selectedMovie, setSelectedMovie] = useState<MovieSeance | undefined>(
     deftime
   );
+
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [numberOfSeats, setNumberOfSeats] = useState(2);
 
+  const [trailer, setTrailer] = useState();
+
   useEffect(() => {
+    if (data?.videos) {
+      const index = data.videos.results.findIndex(
+        (element: Element) => element.type === "Trailer"
+      );
+      setTrailer(data.videos?.results[index]?.key);
+    }
     setSelectedMovie(deftime);
   }, [isLoading]);
 
   const Movies = ({ movie, onChange }: MoviesType) => {
-    console.log(movie);
+    //console.log(movie);
     const [activeTimeId, setActiveTimeId] = useState(movie?.id);
 
     return (
       <>
         <div>
           {movieSeansByDayResult.map((days) => (
-            <div className="flex">
-              <div className="p-2 px-4 m-2 border-pink-500 border flex rounded-md justify-center items-center">
+            <div className="flex flex-col xl:flex-row">
+              <div className="p-2 px-4 m-2 border-pink-500 flex border rounded-md justify-center items-center">
                 {moment(days.day).format("D MMMM")}
               </div>
-              <div className="flex">
+              <div className="flex flex-wrap">
                 {days.times.map((time) => (
                   <div
                     onClick={() => {
@@ -187,53 +201,104 @@ export default function App({ data }) {
   if (!movieSes && isLoading) return null;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[120vh] ">
-      <main className="relative px-4 pb-24 lg:space-y-24 lg:px-36 ">
-        <div className="flex flex-col space-y-4 py-24 md:space-y-4 lg:h-[90vh] lg:pb-24 ">
-          <div className="absolute top-0 left-0 -z-10 h-[55vh]  md:h-[85vh] w-screen ">
-            <Image
-              src={`https://image.tmdb.org/t/p/original/${
-                data?.backdrop_path || data?.poster_path
-              }`}
-              layout="fill"
-              objectFit="cover"
-            />
-          </div>
+    <Layout>
+      <div className="relative min-h-screen bg-gradient-to-b lg:min-h-[110vh] ">
+        <main className="relative px-4 pb-24 lg:space-y-24 lg:px-36">
+          <div className="flex flex-col space-y-4 py-24 h-[70vh] md:space-y-4 lg:h-[90vh] lg:pb-24 ">
+            <div className="absolute top-0 left-0 -z-10 h-[95vh] md:h-[85vh] w-screen ">
+              <Image
+                src={`https://image.tmdb.org/t/p/original/${
+                  data?.backdrop_path || data?.poster_path
+                }`}
+                layout="fill"
+                objectFit="cover"
+              />
+            </div>
+            <div className="flex flex-col md:flex-row md:space-x-40">
+              <div className="flex flex-col pb-60 space-y-2 md:pb-0 md:min-h-[70vh] justify-center md:w-[50vh]">
+                <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-6xl md:text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-pink-400">
+                  {data.original_title}
+                </h1>
+                <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+                  {data.genres && (
+                    <div className="flex space-x-2">
+                      <span className="font-semibold">Genre:</span>
+                      {data.genres.map((genre) => (
+                        <span
+                          key={genre.id}
+                          className="flex rounded-md bg-zinc-800 p-1 text-xs px-4"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
-          <div className="flex flex-col space-y-6 md:min-h-[70vh] md:w-[70vh]">
-            <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-pink-400">
-              {data.original_title}
-            </h1>
-            <p>{data.overview}</p>
-          </div>
-          <div className="flex py-16 justify-evenly w-full min-h-screen">
-            <div className="flex flex-col space-y-6">
-              <Movies
-                movie={selectedMovie}
-                onChange={(movie) => {
-                  setSelectedSeats([]);
-                  setSelectedMovie(movie);
-                }}
-              />
-            </div>
-            <div className="flex flex-col space-y-6 justify-start w-[50vh]">
-              <div className="mt-3 mb-8 bg-pink-500 shadow-xl shadow-pink-500/50 rounded-md justify-center flex p-2 text-xs text-pink-200 font-semibold">
-                SCREEN
+                  <div className="flex space-x-2">
+                    <span className="font-semibold">Language:</span>
+                    <span className="flex rounded-md bg-zinc-800 p-1 text-xs px-4">
+                      {data.spoken_languages[0].english_name}
+                    </span>
+                  </div>
+                </div>
+                <p className="pt-4">{data.overview}</p>
               </div>
-              <Cinema
-                movie={selectedMovie}
-                numberOfSeats={numberOfSeats}
-                selectedSeats={selectedSeats}
-                onSelectedSeatsChange={(
-                  selectedSeats: React.SetStateAction<never[]>
-                ) => setSelectedSeats(selectedSeats)}
-              />
-              <ShowCase />
+              {trailer && (
+                <div className="flex justify-end items-center md:w-[50%]">
+                  <ReactPlayer
+                    url={`https://www.youtube.com/watch?v=${trailer}`}
+                    playing
+                    controls={true}
+                    light={`https://image.tmdb.org/t/p/original/${
+                      data?.poster_path || data?.backdrop_path
+                    }`}
+                    style={{
+                      background: "#27272A",
+                      padding: "10px",
+                      borderRadius: "10px",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col py-16 md:flex-row md:justify-center w-full  md:space-x-20">
+              {!movieSes?.movieSeance.length && (
+                <div className="bg-zinc-800 p-4 py-8 flex justify-center text-zinc-400 w-full rounded-md">
+                  The movie is not currently displayed
+                </div>
+              )}
+              {movieSes?.movieSeance.length > 0 && (
+                <>
+                  <div className="flex flex-col space-y-6 md:w-[50%]">
+                    <Movies
+                      movie={selectedMovie}
+                      onChange={(movie) => {
+                        setSelectedSeats([]);
+                        setSelectedMovie(movie);
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col space-y-6  min-h-screen md:w-[50%]">
+                    <div className="mb-8 mt-3 bg-pink-500 shadow-xl shadow-pink-500/50 rounded-md justify-center flex p-2 text-xs text-pink-200 font-semibold ">
+                      SCREEN
+                    </div>
+                    <Cinema
+                      movie={selectedMovie}
+                      numberOfSeats={numberOfSeats}
+                      selectedSeats={selectedSeats}
+                      onSelectedSeatsChange={(
+                        selectedSeats: React.SetStateAction<never[]>
+                      ) => setSelectedSeats(selectedSeats)}
+                    />
+                    <ShowCase />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 }
 

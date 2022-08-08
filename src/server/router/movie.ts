@@ -2,6 +2,11 @@ import { createRouter } from "./context";
 import { z } from "zod";
 
 export const movieRouter = createRouter()
+  .query("get-now-playing", {
+    async resolve({ ctx, input }) {
+      return await ctx.prisma.movie.findMany();
+    },
+  })
   .query("get-movie", {
     input: z.object({
       id: z.string(),

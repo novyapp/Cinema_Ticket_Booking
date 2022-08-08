@@ -64,6 +64,7 @@ model Movie {
     title       String
     slug        String
     price       Int
+    tmdbId      String?
     movieSeance MovieSeance[]
 }
 

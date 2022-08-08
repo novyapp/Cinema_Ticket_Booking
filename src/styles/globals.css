@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply text-white bg-[#212121];
+    @apply text-white bg-[#212121] !scrollbar-thin !scrollbar-track-transparent !scrollbar-thumb-pink-500;
+  }
+  header {
+    @apply fixed top-0 z-50 flex w-full  items-center justify-between transition-all px-4 lg:px-10 lg:py-2 xl:px-40;
   }
 }
 @layer components {
