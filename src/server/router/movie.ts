@@ -40,11 +40,11 @@ export const movieRouter = createRouter()
   .mutation("update-movie", {
     input: z.object({
       id: z.string(),
-      seats: z.any(),
+      seats: z.string().array(),
     }),
-    async resolve({ input }) {
+    async resolve({ input, ctx }) {
       console.log(input);
-      const result = await prisma?.movieSeance.update({
+      const result = await ctx.prisma.movieSeance.update({
         where: {
           id: input.id,
         },
