@@ -74,11 +74,7 @@ export default function App({
   //console.log(movieSeansByDayResult);
 
   const utils = trpc.useContext();
-  const updateseats = trpc.useMutation("movie.update-movie", {
-    onSuccess() {
-      utils.invalidateQueries("cinema.get-movie-seanses");
-    },
-  });
+  const updateseats = trpc.useMutation("movie.update-movie");
   const deftime = movieSes?.movieSeance[0];
   console.log(deftime);
 
