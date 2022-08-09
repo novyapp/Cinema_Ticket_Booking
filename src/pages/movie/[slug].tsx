@@ -9,6 +9,8 @@ import Layout from "../../components/Layout";
 import ReactPlayer from "react-player";
 import { prisma } from "../../server/db/client";
 import type Prisma from "@prisma/client";
+import ShowCase from "../../components/ShowCase";
+import Cinema from "../../components/Cinema";
 
 type MovieProps = Readonly<Prisma.Movie> | undefined;
 type SeanseProps = Readonly<Prisma.MovieSeance> | undefined;
@@ -47,7 +49,7 @@ export async function getServerSideProps({
   return { props: { data, moviedata } };
 }
 
-export default function App({
+export default function MoviePage({
   data,
   moviedata,
 }: {
@@ -71,16 +73,15 @@ export default function App({
     };
   });
 
-  //console.log(movieSeansByDayResult);
-
   const utils = trpc.useContext();
   const updateseats = trpc.useMutation("movie.update-movie", {
     onSuccess() {
       utils.invalidateQueries("cinema.get-movie-seanses");
     },
   });
+  const createOrder = trpc.useMutation("order.create-order");
+
   const deftime = movieSes?.movieSeance[0];
-  console.log(deftime);
 
   const [selectedMovie, setSelectedMovie] = useState(deftime);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -99,6 +100,8 @@ export default function App({
 
   const Movies = ({ movie, onChange }: { movie: any; onChange: Function }) => {
     const [activeTimeId, setActiveTimeId] = useState(movie?.id);
+
+    if (isLoading) return null;
 
     return (
       <>
@@ -170,10 +173,16 @@ export default function App({
                   </div>
                 )}
               </div>
+
               <div className="flex items-center pt-4">
                 <button
                   onClick={confirmBooking}
-                  className="rounded-md p-2 bg-gradient-to-l from-pink-500 to bg-pink-600 font-semibold text-white w-32 "
+                  disabled={!selectedSeats.length}
+                  className={`font-semibold text-white w-32 rounded-md p-2 ${
+                    !selectedSeats.length
+                      ? "bg-zinc-700 text-zinc-700"
+                      : " bg-gradient-to-l from-pink-500  to-pink-600 "
+                  }`}
                 >
                   Book tickets
                 </button>
@@ -189,6 +198,9 @@ export default function App({
   };
 
   const confirmBooking = () => {
+    console.log(selectedMovie);
+    const totalPrice = selectedMovie?.Movie.price! * selectedSeats.length;
+
     const newAvailableSeats = [
       ...(selectedMovie?.takenSeats ?? []),
       ...selectedSeats,
@@ -200,6 +212,12 @@ export default function App({
     updateseats.mutate({
       id: selectedMovie?.id!,
       seats: selectedSeats,
+    });
+    createOrder.mutate({
+      movieSeanceId: selectedMovie?.id!,
+      movieId: selectedMovie?.Movie.id!,
+      seats: selectedSeats,
+      paid: totalPrice,
     });
 
     setSelectedSeats([]);
@@ -226,14 +244,14 @@ export default function App({
                 <h1 className="ml-[-6px] pb-2 text-transparent uppercase font-bold text-6xl md:text-7xl bg-clip-text bg-gradient-to-l from-pink-600 to-pink-400">
                   {data.original_title}
                 </h1>
-                <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
+                <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2 items-center">
                   {data.genres && (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 items-center">
                       <span className="font-semibold">Genre:</span>
                       {data.genres.map((genre) => (
                         <span
                           key={genre.id}
-                          className="flex rounded-md bg-zinc-800 p-1 text-xs px-4"
+                          className="flex items-center rounded-md bg-zinc-800 p-1 text-xs px-4"
                         >
                           {genre.name}
                         </span>
@@ -250,8 +268,9 @@ export default function App({
                 </div>
                 <p className="pt-4">{data.overview}</p>
               </div>
-              {trailer && (
-                <div className="flex justify-end items-center md:w-[50%]">
+
+              <div className="flex justify-end items-center md:w-[100%]">
+                {trailer && (
                   <ReactPlayer
                     url={`https://www.youtube.com/watch?v=${trailer}`}
                     playing
@@ -265,8 +284,8 @@ export default function App({
                       borderRadius: "10px",
                     }}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
             <div className="flex flex-col py-16 md:flex-row md:justify-center w-full  md:space-x-20">
               {!movieSes?.movieSeance.length && (
@@ -316,71 +335,5 @@ export default function App({
         </main>
       </div>
     </Layout>
-  );
-}
-
-function ShowCase() {
-  return (
-    <ul className="flex items-center justify-center space-x-4 py-6">
-      <li className="flex flex-col items-center">
-        <span className="flex rounded-md  h-10 bg-zinc-400 w-10 text-zinc-500" />
-        <small>N/A</small>
-      </li>
-      <li className="flex flex-col items-center">
-        <span className="flex rounded-md w-10 h-10 text-zinc-500 bg-gradient-to-t from-pink-700 to-pink-500" />
-        <small>Selected</small>
-      </li>
-      <li className="flex flex-col items-center">
-        <span className="flex rounded-md w-10 h-10 bg-zinc-800 pointer-events-none text-zinc-700" />
-        <small>Occupied</small>
-      </li>
-    </ul>
-  );
-}
-
-function Cinema({
-  movie,
-  numberOfSeats,
-  selectedSeats,
-  onSelectedSeatsChange,
-}: {
-  movie: object | undefined;
-  numberOfSeats: string;
-  selectedSeats: string[];
-  onSelectedSeatsChange: Function;
-}) {
-  console.log(typeof numberOfSeats);
-  function handleSelectedState(seat: string) {
-    const seatsToBook = parseInt(numberOfSeats, 10);
-    const isSelected = selectedSeats.includes(seat);
-
-    if (seatsToBook >= selectedSeats.length) {
-      if (isSelected) {
-        onSelectedSeatsChange(
-          selectedSeats.filter((selectedSeat: string) => selectedSeat !== seat)
-        );
-      } else if (selectedSeats.length === seatsToBook) {
-        selectedSeats.shift();
-        onSelectedSeatsChange([...selectedSeats, seat]);
-      } else {
-        onSelectedSeatsChange([...selectedSeats, seat]);
-      }
-    } else if (seatsToBook < selectedSeats.length) {
-      const slice = selectedSeats.slice(0, seatsToBook);
-      slice.shift();
-      onSelectedSeatsChange([...slice, seat]);
-    }
-  }
-  if (!movie) return null;
-  return (
-    <>
-      <div className="flex flex-col items-center space-y-2">
-        <Seat
-          movie={movie}
-          handleSelectedState={handleSelectedState}
-          selectedSeats={selectedSeats}
-        />
-      </div>
-    </>
   );
 }

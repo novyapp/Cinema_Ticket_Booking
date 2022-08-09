@@ -49,6 +49,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+    Order         Order[]
 }
 
 model VerificationToken {
@@ -66,6 +67,7 @@ model Movie {
     price       Int
     tmdbId      String?
     movieSeance MovieSeance[]
+    Order       Order[]
 }
 
 model Cinema {
@@ -102,4 +104,18 @@ model MovieSeance {
     cinemaHallId String
     Movie        Movie      @relation(fields: [movieId], references: [id])
     movieId      String
+    Order        Order[]
+}
+
+model Order {
+    id            String      @id @unique @default(cuid())
+    createdAt     DateTime    @default(now())
+    movieSeance   MovieSeance @relation(fields: [movieSeanceId], references: [id])
+    movieSeanceId String
+    movie         Movie       @relation(fields: [movieId], references: [id])
+    movieId       String
+    user          User?       @relation(fields: [userId], references: [id])
+    userId        String?
+    seats         String[]
+    paid          Int
 }
