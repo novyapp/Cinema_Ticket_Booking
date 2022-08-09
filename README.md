@@ -1,3 +1,12 @@
-# Create T3 App
+# Tikma
 
-This is an app bootstrapped according to the [init.tips](https://init.tips) stack, also known as the T3-Stack.
+Ticket movie booking system with backend dashboard to set Cinema structure.
+
+Tech Stack used in project:
+
+- NextJs
+- NextAuth
+- tRPC
+- TypeScript
+- Tailwind
+- Prisma
