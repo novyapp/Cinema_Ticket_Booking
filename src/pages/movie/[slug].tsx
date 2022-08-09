@@ -11,6 +11,8 @@ import { prisma } from "../../server/db/client";
 import type Prisma from "@prisma/client";
 import ShowCase from "../../components/ShowCase";
 import Cinema from "../../components/Cinema";
+import { IoTicketOutline } from "react-icons/io5";
+import Link from "next/link";
 
 type MovieProps = Readonly<Prisma.Movie> | undefined;
 type SeanseProps = Readonly<Prisma.MovieSeance> | undefined;
@@ -87,6 +89,7 @@ export default function MoviePage({
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [numberOfSeats, setNumberOfSeats] = useState("2");
   const [trailer, setTrailer] = useState();
+  const [bookingOrder, setBookingOrder] = useState(false);
 
   useEffect(() => {
     if (data?.videos) {
@@ -97,6 +100,8 @@ export default function MoviePage({
     }
     setSelectedMovie(deftime);
   }, [isLoading]);
+
+  console.log(bookingOrder);
 
   const Movies = ({ movie, onChange }: { movie: any; onChange: Function }) => {
     const [activeTimeId, setActiveTimeId] = useState(movie?.id);
@@ -198,7 +203,6 @@ export default function MoviePage({
   };
 
   const confirmBooking = () => {
-    console.log(selectedMovie);
     const totalPrice = selectedMovie?.Movie.price! * selectedSeats.length;
 
     const newAvailableSeats = [
@@ -221,6 +225,8 @@ export default function MoviePage({
     });
 
     setSelectedSeats([]);
+
+    setBookingOrder((bookingOrder) => !bookingOrder);
   };
   if (!movieSes && isLoading) return null;
 
@@ -288,12 +294,33 @@ export default function MoviePage({
               </div>
             </div>
             <div className="flex flex-col py-16 md:flex-row md:justify-center w-full  md:space-x-20">
-              {!movieSes?.movieSeance.length && (
+              {bookingOrder && (
+                <div className="bg-zinc-800 flex-col space-y-4 p-4 py-8 flex justify-center items-center  w-full rounded-md min-h-[50vh]">
+                  <IoTicketOutline className="text-8xl text-pink-500" />
+                  <span className="text-4xl capitalize text-zinc-400">
+                    Tickets booked successfully
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      className="bg-gradient-to-l from-pink-500  to-pink-600 p-2 rounded-md"
+                      onClick={(bookingOrder) => setBookingOrder(false)}
+                    >
+                      Book again
+                    </button>
+                    <Link href="/user">
+                      <button className="bg-gradient-to-l from-pink-500  to-pink-600 p-2 rounded-md">
+                        Check your tickets
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+              {!bookingOrder && !movieSes?.movieSeance.length && (
                 <div className="bg-zinc-800 p-4 py-8 flex justify-center text-zinc-400 w-full rounded-md">
                   The movie is not currently displayed
                 </div>
               )}
-              {movieSes?.movieSeance.length! > 0 && (
+              {!bookingOrder && movieSes?.movieSeance.length! > 0 && (
                 <>
                   <div className="flex flex-col space-y-6 md:w-[50%]">
                     <Movies
